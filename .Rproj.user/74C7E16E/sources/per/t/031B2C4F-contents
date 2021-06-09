@@ -1,0 +1,33 @@
+# Define UI for application that draws a histogram
+ui <- fluidPage(
+    
+    includeCSS("www/lanzdash.css"),
+    
+    HTML('<meta name="viewport" content="width=1024">'),
+
+    # Application title
+    titlePanel(
+        title = fluidRow(
+        tags$head(
+            tags$script(src = "dygraph-extra.js"),
+            tags$style(HTML("input[type=\"number\"] {width: 100px;}"))
+        ),
+        # fluidRow(
+        #     # column(3, " "), # img(id = "logodatos", class = "img-logo", src = "Logo.png")),
+        #     column(6, offset = 1,
+        #            h4(id = "apptitle","Panel de simulaciones de IS-LM"))#,
+        #     # column(3, img(height = 55, width = 200, src = "ulpgc.jpg"))
+        #     # column(3, img(id = "logolan", class = "img-logo", src = "ulpgc.jpg"))
+        # )
+    ),
+    
+    windowTitle = list(tags$head(
+        HTML('<link rel="icon", href="Logo.png", type="image/png" />')),
+        "IS-LM: Mundell-Fleming")
+    ),
+    
+    navbarPage(title = "", id = "menu",
+               tabPanel("Inicio", inicio),
+               tabPanel("Mundell-Fleming", ui_mundell_fleming))
+
+)

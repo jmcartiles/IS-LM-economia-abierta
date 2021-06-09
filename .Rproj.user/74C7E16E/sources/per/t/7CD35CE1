@@ -1,0 +1,26 @@
+{
+    "id": "7CD35CE1",
+    "path": "~/Proyectos/IS-LM economia abierta/mundell-fleming/code/f_mundell_fleming_tipo_cambio_flexible.R",
+    "project_path": "mundell-fleming/code/f_mundell_fleming_tipo_cambio_flexible.R",
+    "type": "r_source",
+    "hash": "1850981629",
+    "contents": "",
+    "dirty": false,
+    "created": 1615878834483.0,
+    "source_on_save": false,
+    "relative_order": 8,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "51,57",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1616328007,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1616328007997,
+    "read_only": false,
+    "read_only_alternatives": []
+}

@@ -1,0 +1,103 @@
+ui_mundell_fleming <- fluidPage(
+  
+  fluidRow(
+    column(9,
+           p("El usuario debe configurar la economía en el momento inicial y los cambios que desee realizar."),
+           p("Los parámetros a modificar son los del modelo Mundell-Fleming considerando, tanto un sistema de tipos de cambio fijo como flexible."),
+           p("Una vez haya configurado los escenarios inicial y modificado debe ejecutar el modelo."),
+           p("Los resultados se muestran en las pestañas de:"),
+           tags$ul(
+             tags$li("Gráficos. Se muestra el equilibrio de las curvas IS-LM y la balanza comercial."),
+             tags$li("Principales resultados. Se muestran los principales indicadores de esta economía.")
+           )
+    ),
+    column(3,
+           a(href = "Modelo Mundell-Fleming.pdf",
+             img(src = "pdf_down.png", class = "img-responsive", style = "width:60px;margin: 0 auto;"),
+             div(class = "caption", p(class = "text-center", "Modelo Mundell-Fleming")),
+             download = NA, target = "_blank")
+    )
+  ),
+  hr(),
+  fluidRow(class = "cuadro_mando_periodo",
+           fluidRow(
+             column(6,
+                    selectInput("tipo_cambio", "Seleccione sistema de tipos de cambio", choices = c("Fijo", "Flexible"), selected = "Fijo"))
+           ),
+           column(6,
+                  h4("Escenario base"),
+                  hr(),
+                  # configuracion_escenario_ui("inicial")
+                  column(3,
+                         numericInput(inputId = "inicial_c", label = "c", value = 0.25, min = 0, max = 1),
+                         numericInput(inputId = "inicial_t", label = "t", value = 0.2, min = 0, max = 1),
+                         numericInput(inputId = "inicial_m", label = "m", value = 0.1, min = 0, max = 1),
+                         # numericInput(inputId = "inicial_n", label = "n", value = 0.125, min = 0, max = 1),
+                         numericInput(inputId = "inicial_b", label = "b", value = 1500)),
+                  column(3,
+                         numericInput(inputId = "inicial_C0", label = "C0", value = 400),
+                         numericInput(inputId = "inicial_I0", label = "I0", value = 310),
+                         numericInput(inputId = "inicial_G0", label = "G0", value = 600),
+                         numericInput(inputId = "inicial_XN0", label = "XN0", value = 450)),
+                  column(3,
+                         numericInput(inputId = "inicial_v", label = "v", value = 1000),
+                         numericInput(inputId = "inicial_e", label = "e", value = 1),
+                         numericInput(inputId = "inicial_p_int", label = "P*", value = 1),
+                         numericInput(inputId = "inicial_p_dom", label = "P", value = 1)),
+                  column(3,
+                         numericInput(inputId = "inicial_k", label = "k", value = 10),
+                         numericInput(inputId = "inicial_h", label = "h", value = 12000),
+                         numericInput(inputId = "inicial_M", label = "M", value = 3000)#,
+                         # numericInput(inputId = "inicial_Y_int", label = "Y*", value = 1600)
+                         )
+                  ),
+           column(6,
+                  h4("Escenario modificado"),
+                  hr(),
+                  # configuracion_escenario_ui("modificado")
+                  column(3,
+                         numericInput(inputId = "modificado_c", label = "c", value = 0.25, min = 0, max = 1),
+                         numericInput(inputId = "modificado_t", label = "t", value = 0.2, min = 0, max = 1),
+                         numericInput(inputId = "modificado_m", label = "m", value = 0.1, min = 0, max = 1),
+                         # numericInput(inputId = "modificado_n", label = "n", value = 0.125, min = 0, max = 1),
+                         numericInput(inputId = "modificado_b", label = "b", value = 1500)
+                         ),
+                  column(3,
+                         numericInput(inputId = "modificado_C0", label = "C0", value = 400),
+                         numericInput(inputId = "modificado_I0", label = "I0", value = 310),
+                         numericInput(inputId = "modificado_G0", label = "G0", value = 600),
+                         numericInput(inputId = "modificado_XN0", label = "XN0", value = 450)),
+                  column(3,
+                         numericInput(inputId = "modificado_v", label = "v", value = 1000),
+                         numericInput(inputId = "modificado_e", label = "e", value = 1),
+                         numericInput(inputId = "modificado_p_int", label = "P*", value = 1),
+                         numericInput(inputId = "modificado_p_dom", label = "P", value = 1)),
+                  column(3,
+                         numericInput(inputId = "modificado_k", label = "k", value = 10),
+                         numericInput(inputId = "modificado_h", label = "h", value = 12000),
+                         numericInput(inputId = "modificado_M", label = "M", value = 3000)#,
+                         # numericInput(inputId = "modificado_Y_int", label = "Y*", value = 1600)
+                         )
+           )
+  ),
+  hr(),
+  fluidRow(
+    column(6,
+           actionButton("run_mundell_fleming", "Ejecutar modelo"))
+    ),
+  hr(),
+  tabsetPanel(
+    tabPanel("Gráficos",
+             column(6,
+                    plotlyOutput("grafico_is_lm")),
+             column(6,
+                    plotlyOutput("grafico_xn"))
+             ),
+    tabPanel("Principales resultados",
+             dataTableOutput("principales_resultados"))#,
+    # tabPanel("Pruebas", dataTableOutput("prueba"))
+  )
+  
+  )
+  
+

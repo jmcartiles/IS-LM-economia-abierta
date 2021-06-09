@@ -1,0 +1,233 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed');
+
+body {
+  font-family: 'Roboto Condensed', "Roboto Condensed", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.42857143;
+}
+
+.navbar-default {
+  /* background-color: #f8f8f8; */
+  background-color: transparent !important;
+  border-color: #e7e7e7;
+}
+
+.navbar .navbar-nav {
+    display: inline-block;
+    float: none;
+}
+
+.navbar {
+    text-align: center;
+    font-size: 15px;
+}
+
+.navbar-default .navbar-nav > .active > a, .navbar-default .navbar-nav > .active > a:focus, .navbar-default .navbar-nav > .active > a:hover {
+	color: #555;
+	background-color: /*transparent;*/#e7e7e7;
+	border-bottom: 5px solid #ff7e0e;
+}
+
+figcaption {
+  margin-top: 4px;
+  text-align: right;
+}
+
+h3 p {
+  font-size: 14px;
+}
+
+div.row.variation_row{
+  font-size: 14px;
+}
+
+.dygraph-label.dygraph-title{
+  font-size: 14px;
+}
+
+
+.img-logo{
+  width: auto;
+  max-height: 40px;
+}
+
+/*.img-logo img {
+    max-width: 100%;
+    max-height: 100%;
+
+}*/
+
+#logodatos{
+  padding-right: 10px;
+  border-right-width: 0.5px;
+  border-right-style: solid;
+  border-right-color: #e7e7e7;
+}
+
+#logolan{
+  float: right;
+  padding-left: 10px;
+  border-left-width: 0.5px;
+  border-left-style: solid;
+  border-left-color: #e7e7e7;
+
+}
+
+#apptitle{
+  text-align: left;
+}
+
+.container-fluid h2 h4{
+  text-align: right;
+  font-size: 24px;
+  color: #828282;
+}
+
+.divportada {
+  overflow: visible;
+  height: 342px;
+}
+
+#h4selecttitle{
+  position: absolute;
+  top: 180px;
+  left: 50%;
+  color: #555;
+  width: 100%;
+  max-width: 950px;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  z-index: -21;
+}
+
+
+
+
+
+
+.imgportada{
+  background: url("daea_h_c - copia.png") center no-repeat;
+  /*background: url("Timanfaya_PaisajeVolcánico_09_LR_Turismo Lanzarote_franja.jpg") center no-repeat;
+  background: url("Timanfaya_PaisajeVolcánico_01_LR_Turismo Lanzarote_franja.jpg") center no-repeat; */
+  position: absolute;
+  margin-top: 50px;
+  left: 0;
+  z-index: -1;
+  width: 100%;
+  height: inherit;
+}
+
+.portadablock p {
+  text-align: justify;
+}
+
+.istacimg {
+  float: right;
+  height: 50px;
+  margin-left: 2em;
+}
+
+
+
+
+
+
+
+.col-sm-2 i.fa{
+  padding-left: 15px;
+}
+
+.masinfo {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  display: flex;
+}
+
+.masistac {
+  padding: 16px;
+  color: #3F3F3F;
+  background-color: #e7e7e7;
+  border-top: 2px solid transparent;
+}
+
+.colizq {
+  background-color: #e7e7e7;
+  border-top: 2px solid transparent;
+}
+
+.colder {
+  background-color: rgba(255, 126, 14, 0.4);
+  border-top: 2px solid transparent;
+}
+
+
+
+.mascentro {
+  padding: 16px;
+  color: #3F3F3F;
+
+
+}
+
+.masistac p, .mascentro p, .pdfbox p {
+  padding: 10px; text-align:justify;
+}
+
+.pdfbox {
+  margin-top: 10px;
+  display: flex;
+}
+
+.pdfimg {
+  float: left;
+  height: 100px;
+}
+
+.pdfboxp{
+align-self: flex-end;
+}
+
+.highlight {
+font-size: 16px;
+font-weight: bold;
+}
+
+.bb_title{
+  font-size: 14px;
+  font-family: 'Roboto Condensed', "Roboto Condensed", Helvetica, Arial, sans-serif;
+}
+
+.graph_container { position: relative; }
+.graph_container figure { display: block; }
+.graph_container .fa-arrow-alt-circle-down {
+  position: absolute;
+  top:50px;
+  right:10px;
+  color: #337ab7;
+}
+
+.graph_container button {
+  color: transparent;
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.graph_container + .datatables {
+  margin-top: 20px;
+}
+
+.iconinicio{
+  color:#337ab7;
+}
+
+.masinfo a {
+  text-decoration: none;
+}
+
+.nota {
+  margin-top: 20px;
+}
+
+
+
+

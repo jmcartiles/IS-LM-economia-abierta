@@ -1,0 +1,6 @@
+# Cargar datos
+
+
+var_rango_produccion = 0:25000
+var_dist_eq = 0.2
+var_color <- c("#FF4036", "#0073D9", "#4DAF4A")

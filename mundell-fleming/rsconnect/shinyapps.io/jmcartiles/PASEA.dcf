@@ -1,0 +1,12 @@
+name: PASEA
+title: PASEA
+username:
+account: jmcartiles
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3749288
+bundleId: 4312206
+url: https://jmcartiles.shinyapps.io/PASEA/
+when: 1615117432.1866
+asMultiple: FALSE
+asStatic: FALSE

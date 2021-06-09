@@ -1,0 +1,211 @@
+# Define server logic required to draw a histogram
+shinyServer(function(input, output) {
+    
+    # df <- configuracion_escenario_server("inicial")
+    var_parametros <- eventReactive(input$run_mundell_fleming, {
+        data.frame(
+            Escenario = "Inicial", c = input$inicial_c, t = input$inicial_t, m = input$inicial_m, b = input$inicial_b,
+            C0 = input$inicial_C0, I0 = input$inicial_I0, G0 = input$inicial_G0, XN0 = input$inicial_XN0,
+            v = input$inicial_v, e = input$inicial_e, p_int = input$inicial_p_int, p_dom = input$inicial_p_dom,
+            k = input$inicial_k, h = input$inicial_h, M = input$inicial_M#,
+            # Y_int = input$inicial_Y_int, n = input$inicial_n
+        ) %>% bind_rows(
+            data.frame(
+                Escenario = "Final", c = input$modificado_c, t = input$modificado_t, m = input$modificado_m, b = input$modificado_b,
+                C0 = input$modificado_C0, I0 = input$modificado_I0, G0 = input$modificado_G0, XN0 = input$modificado_XN0,
+                v = input$modificado_v, e = input$modificado_e, p_int = input$modificado_p_int, p_dom = input$modificado_p_dom,
+                k = input$modificado_k, h = input$modificado_h, M = input$modificado_M#,
+                # Y_int = input$modificado_Y_int, n = input$modificado_n
+                )
+            ) %>%
+            mutate(alfa = 1/(1-(c*(1-t)-m)),
+                   gamma = alfa*h/(h+alfa*b*k),
+                   beta = alfa*b/(h+alfa*b*k))
+    })
+    
+    parametros_inicial <- reactive({filter(var_parametros(), Escenario == "Inicial")})
+    parametros_final <- reactive({filter(var_parametros(), Escenario == "Final")})
+    
+    df.cambios <- reactive({diff(as.matrix(var_parametros()[,-1]))})
+    cambios <- reactive({colnames(df.cambios())[which(df.cambios() != 0)]})
+    
+    # var_cambios <- 0
+    
+    # Equilibrio inicial
+    df <- reactive({
+        data.frame(produccion = var_rango_produccion,
+                   is_0 = is_f(produccion = var_rango_produccion,
+                               alfa = parametros_inicial()$alfa, b = parametros_inicial()$b, C0 = parametros_inicial()$C0,
+                               I0 = parametros_inicial()$I0, G0 = parametros_inicial()$G0, XN0 = parametros_inicial()$XN0,
+                               v = parametros_inicial()$v, e = parametros_inicial()$e, p_int = parametros_inicial()$p_int, p_dom = parametros_inicial()$p_dom#,
+                               # n = parametros_inicial()$n, Y_int = parametros_inicial()$Y_int
+                               ),
+                   lm_0 = lm_f(produccion = var_rango_produccion, k = parametros_inicial()$k, h = parametros_inicial()$h,
+                               M = parametros_inicial()$M, p_dom = parametros_inicial()$p_dom),
+                   xn_0 = xn_f(produccion = var_rango_produccion, XN0 = parametros_inicial()$XN0, v = parametros_inicial()$v,
+                               e = parametros_inicial()$e, p_int = parametros_inicial()$p_int, p_dom = parametros_inicial()$p_dom, m = parametros_inicial()$m#,
+                               # n = parametros_inicial()$n, Y_int = parametros_inicial()$Y_int
+                               ))
+    })
+    
+    resultados.mf <- reactive({
+        if(input$tipo_cambio == "Fijo") {
+            df.mf <- mf_tc_fijo(data = df(),
+                       var_rango_produccion = var_rango_produccion, cambios = cambios(),
+                       parametros_inicial = parametros_inicial(), parametros_final = parametros_final(),
+                       var_dist_eq = var_dist_eq)
+        }
+        if(input$tipo_cambio == "Flexible") {
+            df.mf <- mf_tc_flexible(data = df(),
+                           var_rango_produccion = var_rango_produccion, cambios = cambios(),
+                           parametros_inicial = parametros_inicial(), parametros_final = parametros_final(),
+                           var_dist_eq = var_dist_eq)
+        }
+        df.mf
+    })
+
+    df.equilibrio <- reactive({resultados.mf()[[2]]})
+    
+    df.is.lm <- reactive({
+        resultados.mf()[[1]] %>%
+            select(-contains("xn")) %>%
+            pivot_longer(cols = !produccion, names_to = "funcion", values_to = "tipo_interes") %>%
+            separate(funcion, into = c("IS_LM", "situacion"), sep = "_", remove = FALSE) %>%
+            replace_na(list(situacion = 0)) %>%
+            mutate(funcion = toupper(str_replace(funcion, "_", " ")),
+                   IS_LM = toupper(IS_LM)) %>%
+            group_by(IS_LM) %>%
+            mutate(situacion = case_when(situacion == max(situacion) ~ "Final",
+                                         situacion > min(situacion) ~ "Intermedia",
+                                         TRUE ~ "Inicial"))
+        })
+    
+    df.xn <- reactive({resultados.mf()[[1]] %>%
+        select(-matches("is|lm")) %>%
+        pivot_longer(cols = !produccion, names_to = "funcion", values_to = "xn") %>%
+        separate(funcion, into = c("IS_LM", "situacion"), sep = "_", remove = FALSE) %>%
+        replace_na(list(situacion = 0)) %>%
+        mutate(funcion = toupper(str_replace(funcion, "_", " ")),
+               IS_LM = toupper(IS_LM)) %>%
+        group_by(IS_LM) %>%
+        mutate(situacion = case_when(situacion == max(situacion) ~ "Final",
+                                     situacion > min(situacion) ~ "Intermedia",
+                                     TRUE ~ "Inicial"))})
+    
+    
+    grafico_is_lm <- reactive({
+        grafico.tmp <- ggplot(data = df.is.lm(), aes(x = produccion, y = tipo_interes, color = funcion)) +
+            geom_path(size = 1, aes(linetype = situacion)) +
+            scale_color_manual(breaks = c("IS", "IS 0", "IS 1", "IS 2", "LM", "LM 0", "LM 1", "LM 2"),
+                               values = c(rep(var_color[1], 4), rep(var_color[2], 4))) +
+            # scale_color_manual(values = c("#FF4036", "#FF4036", "#0073D9", "#0073D9")) +
+            geom_segment(aes(x = df.equilibrio()$y[1], y = min(tipo_interes), xend = df.equilibrio()$y[1], yend = df.equilibrio()$i[1]), lty = "dotted", color = "black") +
+            geom_segment(aes(x = min(produccion), y = df.equilibrio()$i[1], xend = df.equilibrio()$y[1], yend = df.equilibrio()$i[1]), lty = "dotted", color = "black")+
+            geom_point(data = df.equilibrio()[,-1], aes(x = y, y = i), size = 2, color = "black") +
+            # geom_point(aes(x = y1, y = i1), size = 2, color = "black") +
+            scale_y_continuous(breaks = round(df.equilibrio()$i, 2)) +
+            scale_x_continuous(breaks = round(df.equilibrio()$y, 0)) +
+            labs(x = "Producción (Y)",
+                 y = "Tipo de interés (i)"#,
+                 # title = "IS-LM en economía abierta sin movilidad de capital"
+            ) +
+            theme_classic() +
+            theme(legend.position = "bottom",
+                  legend.title = element_blank()) +
+            guides(linetype = FALSE)
+        
+        # if(length(cambios() > 0)) {
+        #     grafico.tmp <- grafico.tmp +
+        #         # ggplot(data = df.is.lm(), aes(x = produccion, y = tipo_interes, color = funcion)) +
+        #         geom_segment(aes(x = df.equilibrio()$y[-1], y = min(tipo_interes), xend = df.equilibrio()$y[-1], yend = df.equilibrio()$i[-1]), lty = "dotted", color = "black") +
+        #         geom_segment(aes(x = min(produccion), y = df.equilibrio()$i[-1], xend = df.equilibrio()$y[-1], yend = df.equilibrio()$i[-1]), lty = "dotted", color = "black")
+        # }
+        
+        grafico.tmp
+        
+        })
+
+    grafico_xn <- reactive({
+        grafico.tmp <- ggplot(data = df.xn(), aes(x = produccion, y = xn, color = funcion)) +
+            geom_path(size = 1, aes(linetype = situacion)) +
+            scale_color_manual(breaks = c("XN", "XN 0", "XN 1", "XN 2"),
+                               values = rep(var_color[3], 4)) +
+            # scale_color_manual(values = c("#FF4036", "#FF4036", "#0073D9", "#0073D9")) +
+            geom_segment(aes(x = df.equilibrio()$y[1], y = min(xn), xend = df.equilibrio()$y[1], yend = df.equilibrio()$xn[1]), lty = "dotted", color = "black") +
+            geom_segment(aes(x = min(produccion), y = df.equilibrio()$xn[1], xend = df.equilibrio()$y[1], yend = df.equilibrio()$xn[1]), lty = "dotted", color = "black") +
+            geom_segment(aes(x = df.equilibrio()$y[2], y = min(xn), xend = df.equilibrio()$y[2], yend = df.equilibrio()$xn[2]), lty = "dotted", color = "black") +
+            geom_segment(aes(x = min(produccion), y = df.equilibrio()$xn[2], xend = df.equilibrio()$y[2], yend = df.equilibrio()$xn[2]), lty = "dotted", color = "black") +
+            geom_point(data = df.equilibrio()[,-1], aes(x = y, y = xn), size = 2, color = "black") +
+            scale_y_continuous(breaks = round(df.equilibrio()$xn, 0)) +
+            scale_x_continuous(breaks = round(df.equilibrio()$y, 0)) +
+            # geom_point(aes(x = y1, y = i1), size = 2, color = "black") +
+            labs(x = "Producción (Y)",
+                 y = "XN"#,
+                 # title = "Saldo del sector exterior"
+            ) +
+            theme_classic() +
+            theme(legend.position = "bottom",
+                  legend.title = element_blank()) +
+            guides(linetype = FALSE)
+        if(min(df.xn()$xn) <= 0) grafico.tmp <- grafico.tmp + geom_hline(yintercept=0)
+        grafico.tmp
+    })
+
+    df.tmp <- reactive({
+        
+        df.tmp <- df.equilibrio() %>%
+            pivot_longer(!Escenario, names_to = "Variable", values_to = "value") %>%
+            pivot_wider(names_from = Escenario, values_from = "value")
+    
+    if(any(grepl("Final", names(df.tmp)))) {
+        df.tmp <- df.tmp %>%
+            mutate(`Diferencia` = `Final` - `Inicial`)
+    }
+        df.tmp %>%
+            mutate(Variable = case_when(
+                Variable == "y" ~ "Producción",
+                Variable == "i" ~ "Tipo de interés",
+                Variable == "xn" ~ "Exportaciones netas",
+                Variable == "e" ~ "Tipo de cambio",
+                Variable == "recaudacion" ~ "Recaudación",
+                Variable == "M" ~ "Oferta monetaria nominal"
+            )) %>%
+            mutate_if(is.numeric, round, 4)
+    })
+    
+    output$principales_resultados <- renderDataTable({
+        datatable(df.tmp(), options = list(dom = 't'), rownames = FALSE)
+        })
+    
+    output$grafico_is_lm <- renderPlotly({
+        grafico_is_lm () %>% ggplotly
+    })
+    
+    output$grafico_xn <- renderPlotly({
+        grafico_xn () %>% ggplotly
+    })
+
+    
+    # output$prueba <- renderDataTable({
+    #     # data.frame(
+    #     #     Escenario = "Inicial", c = input$inicial_c, t = input$inicial_t, m = input$inicial_m, b = input$inicial_b,
+    #     #     C0 = input$inicial_C0, I0 = input$inicial_I0, G0 = input$inicial_G0, XN0 = input$inicial_XN0,
+    #     #     v = input$inicial_v, e = input$inicial_e, p_int = input$inicial_p_int, p_dom = input$inicial_p_dom,
+    #     #     k = input$inicial_k, h = input$inicial_h, M = input$inicial_M#,
+    #     #     # Y_int = input$inicial_Y_int, n = input$inicial_n
+    #     # ) %>% bind_rows(
+    #         data.frame(
+    #             Escenario = "Final", c = input$modificado_c, t = input$modificado_t, m = input$modificado_m, b = input$modificado_b,
+    #             C0 = input$modificado_C0, I0 = input$modificado_I0, G0 = input$modificado_G0, XN0 = input$modificado_XN0,
+    #             v = input$modificado_v, e = input$modificado_e, p_int = input$modificado_p_int, p_dom = input$modificado_p_dom,
+    #             k = input$modificado_k, h = input$modificado_h, M = input$modificado_M#,
+    #             # Y_int = input$modificado_Y_int, n = input$modificado_n
+    #         )
+    #     # ) %>%
+    #         # mutate(alfa = 1/(1-c*(1-t)-m),
+    #         #        gamma = alfa*h/(h+alfa*b*k),
+    #         #        beta = alfa*b/(h+alfa*b*k))
+    # })
+    
+    
+})

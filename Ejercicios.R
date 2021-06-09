@@ -1,0 +1,19 @@
+# Cargar librarías necesarias
+library(tidyverse)
+library(readxl)
+library(ggpubr)
+
+# Cargar función IS-LM en economía abierta sin movilidad de capital
+
+source(file = "f_is_lm_economia_abierta_smk.R", encoding = "UTF-8")
+
+# Cargar el archivo con los parametros del modelo IS-LM
+df.parametros <- read_xlsx("parametros.xlsx")
+
+# El archivo debe mantener la estructura actual
+# Para nuevas simulaciones modificar los parametros
+resultado <- f_is_lm_ea_smk(var_parametros = df.parametros)
+resultado$equilibrio
+ggarrange(resultado$grafico_is_lm, resultado$grafico_sse, ncol = 2)
+
+# ggsave("grafico_is_lm_ea_smk.png")

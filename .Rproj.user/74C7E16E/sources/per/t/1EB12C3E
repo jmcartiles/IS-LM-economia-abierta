@@ -1,0 +1,26 @@
+{
+    "id": "1EB12C3E",
+    "path": "~/Proyectos/IS-LM economia abierta/mundell-fleming/server.R",
+    "project_path": "mundell-fleming/server.R",
+    "type": "r_source",
+    "hash": "1831971555",
+    "contents": "",
+    "dirty": false,
+    "created": 1615072949960.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "188,16",
+        "scrollLine": "180"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1617613971,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1617613971,
+    "read_only": false,
+    "read_only_alternatives": []
+}

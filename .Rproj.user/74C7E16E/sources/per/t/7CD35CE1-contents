@@ -1,0 +1,365 @@
+# Movilidad perfecta de capitales con tipo de cambio flexible ----
+mf_tc_flexible <- function(data, var_rango_produccion, cambios, parametros_inicial, parametros_final, var_dist_eq, df.equilibrio) {
+  
+  df <- data
+  
+  is_0_f <- approxfun(df$produccion, df$is_0, rule = 2)
+  lm_0_f <- approxfun(df$produccion, df$lm_0, rule = 2)
+  xn_0_f <- approxfun(df$produccion, df$xn_0, rule = 2)
+  
+  # Puntos de equilibrio
+  # Equilibrio inicial
+  y0 <- uniroot(function(x) is_0_f(x) - lm_0_f(x), range(df$produccion))$root
+  i0 <- lm_0_f(y0)
+  xn0 <- xn_0_f(y0)
+  df.equilibrio <- data.frame("Escenario" = "Inicial", y = y0, i = i0, xn = xn0,
+                              e = parametros_inicial$e, recaudacion = parametros_inicial$t*y0, M = parametros_inicial$M)
+  
+  cambio_f <- "cambio_funciones_"
+  # Indicar si hay una nueva IS
+  # if(any(c("c", "t", "m", "b", "C0", "I0", "G0", "XN0", "v", "e", "p_int", "p_dom", "n", "Y_int") %in% cambios)) {
+  if(any(c("c", "t", "m", "b", "C0", "I0", "G0", "XN0", "v", "e", "p_int", "p_dom") %in% cambios)) {
+    
+    # cambio en la IS
+    df <- df %>%
+      mutate(is_1 = is_f(produccion = var_rango_produccion,
+                         alfa = parametros_final$alfa, b = parametros_final$b, C0 = parametros_final$C0,
+                         I0 = parametros_final$I0, G0 = parametros_final$G0, XN0 = parametros_final$XN0,
+                         # Y_int = parametros_final$Y_int, n = parametros_final$n,
+                         v = parametros_final$v, e = parametros_final$e, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom))
+    
+    is_1_f <- approxfun(df$produccion, df$is_1, rule = 2)
+    cambio_f <- paste0(cambio_f, "IS_")
+  }
+  
+  # Indicar si hay una nueva LM
+  if(any(c("k", "h", "M", "p_dom") %in% cambios)) {
+    
+    df <- df %>%
+      mutate(lm_1 = lm_f(produccion = var_rango_produccion, k = parametros_final$k, h = parametros_final$h,
+                         M = parametros_final$M, p_dom = parametros_final$p_dom))
+    
+    lm_1_f <- approxfun(df$produccion, df$lm_1, rule = 2)
+    cambio_f <- paste0(cambio_f, "LM_")
+  }
+  
+  # Indicar si hay una nueva XN
+  # if(any(c("XN0", "v", "e", "p_int", "p_dom", "m", "n", "Y_int") %in% cambios)) {
+  if(any(c("XN0", "v", "e", "p_int", "p_dom", "m") %in% cambios)) {
+    
+    df <- df %>%
+      mutate(xn_1 = xn_f(produccion = var_rango_produccion, XN0 = parametros_final$XN0, v = parametros_final$v,
+                         # Y_int = parametros_final$Y_int, n = parametros_final$n,
+                         e = parametros_final$e, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom, m = parametros_final$m))
+    
+    xn_1_f <- approxfun(df$produccion, df$xn_1, rule = 2)
+    cambio_f <- paste0(cambio_f, "XN")
+    
+  }
+  
+  if(grepl("IS|LM|XN", cambio_f)) {
+    
+    cambio_xn <- ""
+    
+    if(grepl("LM", cambio_f)) {
+      
+      y0 <- parametros_final %>% mutate(y0 = 1/k*(h*i0+M/p_dom)) %>% pull(y0)
+      # y0 <- parametros_final %>% mutate(y0 = gamma*(C0+I0+G0+XN0+v*p_int)+beta*M/p_dom) %>% pull(y0)
+      
+      if(grepl("XN", cambio_f)) {
+        
+        # Nivel de renta con la nueva IS para el tipo de interés inicial
+        y2 <- y0
+        # Calcular el tipo de cambio con el que se alcanza el nivel de renta inicial con el tipo de interés inicial
+        # e2 <- parametros_final %>% mutate(e2 = p_dom/(p_int*v)*(y2/gamma-(C0+I0+G0+XN0+n*Y_int)-beta/gamma*M/p_dom)) %>% pull(e2)
+        e2 <- parametros_final %>% mutate(e2 = p_dom/(p_int*v)*(y2/gamma-(C0+I0+G0+XN0)-beta/gamma*M/p_dom)) %>% pull(e2)
+        
+        df <- df %>%
+          mutate(xn_2 = xn_f(produccion = var_rango_produccion, XN0 = parametros_final$XN0, v = parametros_final$v,
+                             # Y_int = parametros_final$Y_int, n = parametros_final$n,
+                             e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom, m = parametros_final$m),
+                 is_2 = is_f(produccion = var_rango_produccion,
+                             alfa = parametros_final$alfa, b = parametros_final$b, C0 = parametros_final$C0,
+                             # Y_int = parametros_final$Y_int, n = parametros_final$n,
+                             I0 = parametros_final$I0, G0 = parametros_final$G0, XN0 = parametros_final$XN0,
+                             v = parametros_final$v, e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom))
+        
+        xn_2_f <- approxfun(df$produccion, df$xn_2, rule = 2)
+        is_2_f <- approxfun(df$produccion, df$is_2, rule = 2)
+        
+        df.equilibrio <- bind_rows(df.equilibrio %>% filter(Escenario == "Inicial"),
+                                   data.frame("Escenario" = "Final", y = y2, i = i0, xn = xn_2_f(y2),
+                                              e = e2, recaudacion = parametros_final$t*y2, M = parametros_final$M))
+        
+      } else if(grepl("IS", cambio_f)) {
+        
+        # Nivel de renta con la nueva IS para el tipo de interés inicial
+        y2 <- y0
+        # Calcular el tipo de cambio con el que se alcanza el nivel de renta inicial con el tipo de interés inicial
+        # e2 <- parametros_final %>% mutate(e2 = p_dom/(p_int*v)*(y2/gamma-(C0+I0+G0+XN0+n*Y_int)-beta/gamma*M/p_dom)) %>% pull(e2)
+        e2 <- parametros_final %>% mutate(e2 = p_dom/(p_int*v)*(y2/gamma-(C0+I0+G0+XN0)-beta/gamma*M/p_dom)) %>% pull(e2)
+        
+        df <- df %>%
+          mutate(xn_1 = xn_f(produccion = var_rango_produccion, XN0 = parametros_final$XN0, v = parametros_final$v,
+                             # Y_int = parametros_final$Y_int, n = parametros_final$n,
+                             e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom, m = parametros_final$m),
+                 is_2 = is_f(produccion = var_rango_produccion,
+                             alfa = parametros_final$alfa, b = parametros_final$b, C0 = parametros_final$C0,
+                             I0 = parametros_final$I0, G0 = parametros_final$G0, XN0 = parametros_final$XN0,
+                             # Y_int = parametros_final$Y_int, n = parametros_final$n,
+                             v = parametros_final$v, e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom))
+        
+        xn_1_f <- approxfun(df$produccion, df$xn_1, rule = 2)
+        is_2_f <- approxfun(df$produccion, df$is_2, rule = 2)
+        
+        df.equilibrio <- bind_rows(df.equilibrio %>% filter(Escenario == "Inicial"),
+                                   data.frame("Escenario" = "Final", y = y2, i = i0, xn = xn_1_f(y2),
+                                              e = e2, recaudacion = parametros_final$t*y2, M = parametros_final$M))
+        
+      } else {
+        
+        # Nivel de renta con la nueva IS para el tipo de interés inicial
+        y2 <- y0
+        # Calcular el tipo de cambio con el que se alcanza el nivel de renta inicial con el tipo de interés inicial
+        # e2 <- parametros_final %>% mutate(e2 = p_dom/(p_int*v)*(y2/gamma-(C0+I0+G0+XN0+n*Y_int)-beta/gamma*M/p_dom)) %>% pull(e2)
+        e2 <- parametros_final %>% mutate(e2 = p_dom/(p_int*v)*(y2/gamma-(C0+I0+G0+XN0)-beta/gamma*M/p_dom)) %>% pull(e2)
+        
+        df <- df %>%
+          mutate(xn_1 = xn_f(produccion = var_rango_produccion, XN0 = parametros_final$XN0, v = parametros_final$v,
+                             # Y_int = parametros_final$Y_int, n = parametros_final$n,
+                             e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom, m = parametros_final$m),
+                 is_1 = is_f(produccion = var_rango_produccion,
+                             alfa = parametros_final$alfa, b = parametros_final$b, C0 = parametros_final$C0,
+                             I0 = parametros_final$I0, G0 = parametros_final$G0, XN0 = parametros_final$XN0,
+                             # Y_int = parametros_final$Y_int, n = parametros_final$n,
+                             v = parametros_final$v, e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom))
+        
+        xn_1_f <- approxfun(df$produccion, df$xn_1, rule = 2)
+        is_1_f <- approxfun(df$produccion, df$is_2, rule = 2)
+        
+        df.equilibrio <- bind_rows(df.equilibrio %>% filter(Escenario == "Inicial"),
+                                   data.frame("Escenario" = "Final", y = y2, i = i0, xn = xn_1_f(y2),
+                                              e = e2, recaudacion = parametros_final$t*y2, M = parametros_final$M))
+        
+      }
+      
+      # if(grepl("IS", cambio_f)) {
+      #   
+      #   # Nivel de renta con la nueva IS para el tipo de interés inicial
+      #   y2 <- y0
+      #   # Calcular el tipo de cambio con el que se alcanza el nivel de renta inicial con el tipo de interés inicial
+      #   e2 <- parametros_final %>% mutate(e2 = p_int/(p_dom*v)*(y2/gamma-(C0+I0+G0+XN0)-beta/gamma*M/p_dom)) %>% pull(e2)
+      #   
+      #   df <- df %>%
+      #     mutate(xn_1 = xn_f(produccion = var_rango_produccion, XN0 = parametros_final$XN0, v = parametros_final$v,
+      #                        e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom, m = parametros_final$m),
+      #            is_2 = is_f(produccion = var_rango_produccion,
+      #                        alfa = parametros_final$alfa, b = parametros_final$b, C0 = parametros_final$C0,
+      #                        I0 = parametros_final$I0, G0 = parametros_final$G0, XN0 = parametros_final$XN0,
+      #                        v = parametros_final$v, e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom))
+      #   
+      #   xn_1_f <- approxfun(df$produccion, df$xn_1, rule = 2)
+      #   is_2_f <- approxfun(df$produccion, df$is_2, rule = 2)
+      #   
+      # }
+      
+    } else {
+      
+      if(grepl("XN", cambio_f)) {
+        
+        # Nivel de renta con la nueva IS para el tipo de interés inicial
+        y2 <- y0
+        # Calcular el tipo de cambio con el que se alcanza el nivel de renta inicial con el tipo de interés inicial
+        # e2 <- parametros_final %>% mutate(e2 = p_dom/(p_int*v)*(y2/gamma-(C0+I0+G0+XN0+n*Y_int)-beta/gamma*M/p_dom)) %>% pull(e2)
+        e2 <- parametros_final %>% mutate(e2 = p_dom/(p_int*v)*(y2/gamma-(C0+I0+G0+XN0)-beta/gamma*M/p_dom)) %>% pull(e2)
+        
+        df <- df %>%
+          mutate(xn_2 = xn_f(produccion = var_rango_produccion, XN0 = parametros_final$XN0, v = parametros_final$v,
+                             # Y_int = parametros_final$Y_int, n = parametros_final$n,
+                             e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom, m = parametros_final$m),
+                 is_2 = is_f(produccion = var_rango_produccion,
+                             alfa = parametros_final$alfa, b = parametros_final$b, C0 = parametros_final$C0,
+                             I0 = parametros_final$I0, G0 = parametros_final$G0, XN0 = parametros_final$XN0,
+                             # Y_int = parametros_final$Y_int, n = parametros_final$n,
+                             v = parametros_final$v, e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom))
+        
+        xn_2_f <- approxfun(df$produccion, df$xn_2, rule = 2)
+        is_2_f <- approxfun(df$produccion, df$is_2, rule = 2)
+        
+        df.equilibrio <- bind_rows(df.equilibrio %>% filter(Escenario == "Inicial"),
+                                   data.frame("Escenario" = "Final", y = y2, i = i0, xn = xn_2_f(y2),
+                                              e = e2, recaudacion = parametros_final$t*y2, M = parametros_final$M))
+        
+      } else {
+        
+        # Nivel de renta con la nueva IS para el tipo de interés inicial
+        y2 <- y0
+        # Calcular el tipo de cambio con el que se alcanza el nivel de renta inicial con el tipo de interés inicial
+        # e2 <- parametros_final %>% mutate(e2 = p_dom/(p_int*v)*(y2/gamma-(C0+I0+G0+XN0+n*Y_int)-beta/gamma*M/p_dom)) %>% pull(e2)
+        e2 <- parametros_final %>% mutate(e2 = p_dom/(p_int*v)*(y2/gamma-(C0+I0+G0+XN0)-beta/gamma*M/p_dom)) %>% pull(e2)
+        
+        df <- df %>%
+          mutate(xn_1 = xn_f(produccion = var_rango_produccion, XN0 = parametros_final$XN0, v = parametros_final$v,
+                             # Y_int = parametros_final$Y_int, n = parametros_final$n,
+                             e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom, m = parametros_final$m),
+                 is_2 = is_f(produccion = var_rango_produccion,
+                             alfa = parametros_final$alfa, b = parametros_final$b, C0 = parametros_final$C0,
+                             I0 = parametros_final$I0, G0 = parametros_final$G0, XN0 = parametros_final$XN0,
+                             # Y_int = parametros_final$Y_int, n = parametros_final$n,
+                             v = parametros_final$v, e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom))
+        
+        xn_1_f <- approxfun(df$produccion, df$xn_1, rule = 2)
+        is_2_f <- approxfun(df$produccion, df$is_2, rule = 2)
+        
+        df.equilibrio <- bind_rows(df.equilibrio %>% filter(Escenario == "Inicial"),
+                                   data.frame("Escenario" = "Final", y = y2, i = i0, xn = xn_1_f(y2),
+                                              e = e2, recaudacion = parametros_final$t*y2, M = parametros_final$M))
+        
+      }
+      
+    }
+  
+    
+    
+    # if(grepl("XN", cambio_f)) {
+    #   # Nivel de renta con la nueva IS para el tipo de interés inicial
+    #   y2 <- y0
+    #   # Calcular el tipo de cambio con el que se alcanza el nivel de renta inicial con el tipo de interés inicial
+    #   e2 <- parametros_final %>% mutate(e2 = p_int/(p_dom*v)*(y2/gamma-(C0+I0+G0+XN0)-beta/gamma*M/p_dom)) %>% pull(e2)
+    #   
+    #   df <- df %>%
+    #     mutate(xn_2 = xn_f(produccion = var_rango_produccion, XN0 = parametros_final$XN0, v = parametros_final$v,
+    #                        e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom, m = parametros_final$m))
+    #   
+    #   xn_1_f <- approxfun(df$produccion, df$xn_2, rule = 2)
+    #   # cambio_xn <- paste0(cambio_xn, "XN_2")
+    #   
+    # } else {
+    #   # # Nivel de renta con la nueva IS para el tipo de interés inicial
+    #   # y2 <- y0
+    #   # # Calcular el tipo de cambio con el que se alcanza el nivel de renta inicial con el tipo de interés inicial
+    #   # e2 <- parametros_final %>% mutate(e2 = p_int/(p_dom*v)*(y2/gamma-(C0+I0+G0+XN0)-beta/gamma*M/p_dom)) %>% pull(e2)
+    #   # 
+    #   # df <- df %>%
+    #   #   mutate(xn_1 = xn_f(produccion = var_rango_produccion, XN0 = parametros_final$XN0, v = parametros_final$v,
+    #   #                      e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom, m = parametros_final$m),
+    #   #          is_2 = is_f(produccion = var_rango_produccion,
+    #   #                      alfa = parametros_final$alfa, b = parametros_final$b, C0 = parametros_final$C0,
+    #   #                      I0 = parametros_final$I0, G0 = parametros_final$G0, XN0 = parametros_final$XN0,
+    #   #                      v = parametros_final$v, e = e2, p_int = parametros_final$p_int, p_dom = parametros_final$p_dom))
+    #   # 
+    #   # xn_1_f <- approxfun(df$produccion, df$xn_1, rule = 2)
+    #   # is_2_f <- approxfun(df$produccion, df$is_2, rule = 2)
+    #   
+    #   # cambio_xn <- paste0(cambio_xn, "XN_1")
+    # }
+    
+    # df <- df %>%
+    #   mutate(lm_2 = lm_f(produccion = var_rango_produccion, k = parametros_final$k,
+    #                      h = parametros_final$h, M = M2, p_dom = parametros_final$p_dom))
+    # lm_2_f <- approxfun(df$produccion, df$lm_2, rule = 2)
+    
+    # df.equilibrio <- bind_rows(df.equilibrio %>% filter(Escenario == "Inicial"),
+    #                            data.frame("Escenario" = "Final", y = y2, i = i0, xn = case_when(
+    #                              # grepl("XN_2", cambio_xn) == T ~ xn_2_f(y2),
+    #                              grepl("XN_1", cambio_xn) == T ~ xn_1_f(y2),
+    #                              TRUE ~ xn_0_f(y2))))
+    
+    df <- df %>%
+      filter(produccion > min(c((1-var_dist_eq)*y0, (1+var_dist_eq)*y2)), produccion < max(c((1-var_dist_eq)*y0, (1+var_dist_eq)*y2)))
+  } else {
+    df <- df %>%
+      rename("LM" = "lm_0", "IS" = "is_0")
+    df <- df %>%
+      filter(produccion > (1-var_dist_eq)*y0, produccion < (1+var_dist_eq)*y0)
+  }
+  
+  list.resultados <- list(df, df.equilibrio)
+  
+  return(list.resultados)
+  
+}
+
+
+# resultados.mf_tc_fijo <- list.resultados
+# 
+# df.equilibrio <- resultados.mf_tc_fijo[[2]]
+# df.is.lm <- resultados.mf_tc_fijo[[1]] %>%
+#   select(-contains("xn")) %>%
+#   pivot_longer(cols = !produccion, names_to = "funcion", values_to = "tipo_interes") %>%
+#   separate(funcion, into = c("IS_LM", "situacion"), sep = "_", remove = FALSE) %>%
+#   replace_na(list(situacion = 0)) %>%
+#   mutate(funcion = toupper(str_replace(funcion, "_", " ")),
+#          IS_LM = toupper(IS_LM)) %>%
+#   group_by(IS_LM) %>%
+#   mutate(situacion = case_when(situacion == max(situacion) ~ "Final",
+#                                situacion > min(situacion) ~ "Intermedia",
+#                                TRUE ~ "Inicial"))
+# 
+# df.xn <- resultados.mf_tc_fijo[[1]] %>%
+#   select(-matches("is|lm")) %>%
+#   pivot_longer(cols = !produccion, names_to = "funcion", values_to = "xn") %>%
+#   separate(funcion, into = c("IS_LM", "situacion"), sep = "_", remove = FALSE) %>%
+#   replace_na(list(situacion = 0)) %>%
+#   mutate(funcion = toupper(str_replace(funcion, "_", " ")),
+#          IS_LM = toupper(IS_LM)) %>%
+#   group_by(IS_LM) %>%
+#   mutate(situacion = case_when(situacion == max(situacion) ~ "Final",
+#                                situacion > min(situacion) ~ "Intermedia",
+#                                TRUE ~ "Inicial"))
+# 
+# grafico_is_lm <- ggplot(data = df.is.lm, aes(x = produccion, y = tipo_interes, color = funcion)) +
+#   geom_path(size = 1, aes(linetype = situacion)) +
+#   scale_color_manual(breaks = c("IS", "IS 0", "IS 1", "IS 2", "LM", "LM 0", "LM 1", "LM 2"),
+#                      values = c(rep(var_color[1], 4), rep(var_color[2], 4))) +
+#   # scale_color_manual(values = c("#FF4036", "#FF4036", "#0073D9", "#0073D9")) +
+#   geom_segment(aes(x = y0, y = min(tipo_interes), xend = y0, yend = i0), lty = "dotted", color = "black") +
+#   geom_segment(aes(x = min(produccion), y = i0, xend = y0, yend = i0), lty = "dotted", color = "black")
+# 
+# if(any(grepl("Inicial", df.is.lm$situacion))) {
+#   grafico_is_lm <- grafico_is_lm +
+#     # ggplot(data = df.is.lm, aes(x = produccion, y = tipo_interes, color = funcion)) +
+#     geom_segment(aes(x = df.equilibrio$y[-1], y = min(tipo_interes), xend = df.equilibrio$y[-1], yend = df.equilibrio$i[-1]), lty = "dotted", color = "black") +
+#     geom_segment(aes(x = min(produccion), y = df.equilibrio$i[-1], xend = df.equilibrio$y[-1], yend = df.equilibrio$i[-1]), lty = "dotted", color = "black")
+# }
+# 
+# grafico_is_lm <- grafico_is_lm +
+#   geom_point(data = df.equilibrio[,-1], aes(x = y, y = i), size = 2, color = "black") +
+#   # geom_point(aes(x = y1, y = i1), size = 2, color = "black") +
+#   scale_y_continuous(breaks = round(df.equilibrio$i, 2)) +
+#   scale_x_continuous(breaks = round(df.equilibrio$y, 0)) +
+#   labs(x = "Producción (Y)",
+#        y = "Tipo de interés (i)"#,
+#        # title = "IS-LM en economía abierta sin movilidad de capital"
+#   ) +
+#   theme_classic() +
+#   theme(legend.position = "bottom",
+#         legend.title = element_blank()) +
+#   guides(linetype = FALSE)
+# grafico_is_lm
+# 
+# 
+# grafico_xn <- ggplot(data = df.xn, aes(x = produccion, y = xn, color = funcion)) +
+#   geom_path(size = 1, aes(linetype = situacion)) +
+#   scale_color_manual(breaks = c("XN", "XN 0", "XN 1", "XN 2"),
+#                      values = rep(var_color[3], 4)) +
+#   # scale_color_manual(values = c("#FF4036", "#FF4036", "#0073D9", "#0073D9")) +
+#   geom_segment(aes(x = y0, y = min(xn), xend = y0, yend = df.equilibrio$xn[1]), lty = "dotted", color = "black") +
+#   geom_segment(aes(x = min(produccion), y = df.equilibrio$xn[1], xend = y0, yend = df.equilibrio$xn[1]), lty = "dotted", color = "black") +
+#   geom_segment(aes(x = df.equilibrio$y[2], y = min(xn), xend = df.equilibrio$y[2], yend = df.equilibrio$xn[2]), lty = "dotted", color = "black") +
+#   geom_segment(aes(x = min(produccion), y = df.equilibrio$xn[2], xend = df.equilibrio$y[2], yend = df.equilibrio$xn[2]), lty = "dotted", color = "black") +
+#   geom_point(data = df.equilibrio[,-1], aes(x = y, y = xn), size = 2, color = "black") +
+#   scale_y_continuous(breaks = round(df.equilibrio$xn, 0)) +
+#   scale_x_continuous(breaks = round(df.equilibrio$y, 0)) +
+#   # geom_point(aes(x = y1, y = i1), size = 2, color = "black") +
+#   labs(x = "Producción (Y)",
+#        y = "XN"#,
+#        # title = "Saldo del sector exterior"
+#   ) +
+#   theme_classic() +
+#   theme(legend.position = "bottom",
+#         legend.title = element_blank()) +
+#   guides(linetype = FALSE)
+# if(min(df.xn$xn) <= 0) grafico_xn <- grafico_xn + geom_hline(yintercept=0)
+# grafico_xn
+

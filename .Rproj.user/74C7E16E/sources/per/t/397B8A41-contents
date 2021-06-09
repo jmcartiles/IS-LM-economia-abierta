@@ -1,0 +1,10 @@
+# Funciones IS-LM
+# is_f <- function(produccion, alfa, C0, G0, I0, XN0, n, Y_int, v, e, p_dom, p_int, b) { 1/b*(C0+G0+I0+XN0+n*Y_int+v*e*p_int/p_dom-1/alfa*produccion) }
+is_f <- function(produccion, alfa, C0, G0, I0, XN0, v, e, p_dom, p_int, b) { 1/b*(C0+G0+I0+XN0+v*e*p_int/p_dom-1/alfa*produccion) }
+lm_f <- function(produccion, k, h, M, p_dom) { 1/h * (k*produccion-M/p_dom) }
+# tipo_cambio_f <- function(produccion, tipo_interes, p_dom, p_int, v, alfa, b, C0, G0, I0, XN0) { p_dom/(v*p_int)*(produccion/alfa+b*tipo_interes-(C0+G0+I0+XN0)) }
+# tipo_cambio_f <- function(produccion, p_dom, p_int, v, alfa, gamma, beta, C0, G0, I0, XN0, M) {
+#   p_dom/(p_int*v)*(produccion/gamma-(G0+C0+I0+XN0)-beta/gamma*M/p_dom)
+# }
+# xn_f <- function(produccion, XN0, n, Y_int, v, e, p_int, p_dom, m) { (XN0+n*Y_int) + v*e*p_int/p_dom - m*produccion }
+xn_f <- function(produccion, XN0, v, e, p_int, p_dom, m) { XN0 + v*e*p_int/p_dom - m*produccion }

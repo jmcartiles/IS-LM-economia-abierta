@@ -1,0 +1,96 @@
+inicio <-
+  fluidPage(
+    h1(id = "h4selecttitle", "Panel de simulaciones de IS-LM en economía abierta"),
+    # h1(),
+    div(class = "divportada",
+        div(class = "imgportada")
+    ),
+    column(8, class = "portadablock", offset = 2,
+           p("Esta plataforma desarrolla el modelo de Mundell-Fleming, se plantea una economía abierta con perfecta movilidad de capital,
+             se consideran los escenarios de tipo de cambio fijo y flexible."),
+           p("La plataforma da soporte a la asignatura de macroeconomía internacional, pues permite al usuario interactuar con la misma estableciendo distintos escenarios de política económica y comprobar 
+             los resultados. Los resultados mostrados son: los gráficos del equilibrio IS-LM y de la balanza comercial; y los principales indicadores 
+             macroeconómicos antes y después del cambio de escenario. De esta manera se puede comprobar la efectividad de las distintas políticas económicas."),
+           p("La plataforma ha sido desarrollada por ", a(href = "https://cazorla-artiles.netlify.app/", "José Manuel Cazorla Artiles"), " del Departamento de Análisis Económico Aplicado de la ULPGC."),
+           # tags$ol(
+           #   tags$li("la fecha de reactivación del mercado en función de la epidemia para cada pareja de
+           #           origen-destino (en base a un modelo epidemiológico SIR); "),
+           #   tags$li("la reducción en renta en origen y cómo reduce la intención de viajar
+           #           (en base a un modelo de datos de panel); "),
+           #   tags$li("la reducción en la confianza para viajar (utilizando encuestas sobre intención
+           #           de viajar post-pantemia). "),
+           #   style="list-style-type:lower-roman"
+           # ),
+           # p("Estos tres efectos reducen la demanda esperada pre-Covid19 y permiten ajustar de forma
+           #   realista el valor de la demanda esperada post-Covid19."),
+           #p("En la esquina superior derecha de cada gráfico encontrará un icono ", icon("arrow-alt-circle-down", class="iconinicio"),
+           #  " para su descarga. Asímismo, podrá descargarse los datos utilizados para la generación del gráfico pulsando en el icono ",
+           #  icon("download"), "."),
+           # p("A través del siguiente ",
+           #   a(href = "http://www.datosdelanzarote.com/Uploads/doc/Metodolog%C3%ADa-y-fuentes-del-Panel-de-indicadores-de-turismo-de-Lanzarote-20200109092504808FUENTES-DE-INFORMACI%C3%93N-UTILIZADAS-Y-SU-METODOLOG%C3%8DA.pdf", "enlace", target = "_blank"),
+           #   " puede ampliar la información sobre las fuentes y metodología aplicadas en esta aplicación. Si tiene cualquier pregunta o sugerencia contacte con nosotros",
+           #   a(href = "mailto:datos@cabildodelanzarote.com", icon("envelope")),"."),
+           # 
+           
+           # div(class = "row masinfo",
+           #     a(href = "http://www.gobiernodecanarias.org/istac/", target = "_blank",
+           #       div(class = "col-xs-4",
+           #           p( img( class = "istacimg", src = "istac.png"),
+           #             "Consulte la documentación del ISTAC para obtener más información sobre las fuentes de datos utilizadas y su metodología"
+           #             )
+           #           )
+           #       ),
+           #
+           #     a(href = "http://www.datosdelanzarote.com/", target = "_blank",
+           #       div(class = "col-xs-4",
+           #           p("Si lo desea, puede consultar más estadísticas y documentos de turismo y otros temas de Lanzarote en la web del Centro de Datos del Cabildo de Lanzarote"
+           #             )
+           #           )
+           #       )
+           #     ),
+           
+           # Se comenta porque no se piensa utilizar pero se deja por si se cambia de opinión
+           
+           # fluidRow(class = "masinfo",
+           #          column(6, class = "colizq",
+           #                 a(href = "", target = "_blank",
+           #                   div(class = "masistac",
+           #                       #downloadLink("download_caso_aplicado_barbados",
+           #                       p("MODELO PREDICTIVO DE DEMANDA TURÍSTICA INTERNACIONAL EN EL CONTEXTO DEL COVID19: UNA APLICACIÓN EN BARBADOS (Pendiente)"),
+           #                       img(class = "istacimg", src = "pdf_down.png")
+           #                   )
+           #                 )
+           #          ),
+           #          column(5, offset = 1, class = "colder",
+           #                 a(href = "", target = "_blank",
+           #                   div(class = "mascentro",
+           #                       p("Si lo desea, puede consultar más estadísticas y documentos ")
+           #                   )
+           #                 )
+           #          )
+           # ),
+           # 
+           # fluidRow(
+           #   a(href = "http://www.datosdelanzarote.com/Uploads/doc/Metodolog%C3%ADa-y-fuentes-del-Panel-de-indicadores-de-turismo-de-Lanzarote-20200109092504808FUENTES-DE-INFORMACI%C3%93N-UTILIZADAS-Y-SU-METODOLOG%C3%8DA.pdf", target = "_blank",
+           #     div(class = "pdfbox",
+           #     div(class = "pdfboxp", p("Fuentes de información y metodología.")))
+           #   ),
+           # ),
+           
+           
+           div( class = "nota",
+                p(style = "font-size: 12px", span(style = "font-weight: bold;","NOTA:"),
+                  "Largos periodos de inactividad provocan que la pantalla se quede en gris por desconexión al servidor. En esos casos solo debe refrescar la web para volver a su actividad normal.")
+           )#,
+           # hr(),
+           # div(
+           #   p(style = "font-size: x-small",
+           #     span(style = "font-weight: bold;","EXCLUSIÓN DE RESPONSABILIDAD:"),
+           #     "El Modelo de Demanda Turística Internacional “MDTI” emplea datos y estadísticas para predecir resultados probables de la evolución de la demanda turística internacional a partir de unos modelos de datos. Sin embargo, al igual que otros modelos predictivos, el MDTI puede realizar predicciones que difieran del comportamiento real de la demanda turística internacional y sus impactos económicos asociados.  En consecuencia, esta herramienta se ofrece sin ninguna garantía en cuanto a su precisión, sólo como una forma útil pero no infalible de modelar la evolución de la demanda turística internacional y sus impactos económicos asociados.  Por lo tanto, el BID no es responsable de ningún gasto o daño, directo, indirecto, accesorio, especial o por vía de consecuencia, en el que se incurra en virtud de la utilización del MDTI.  La presente Exclusión de Responsabilidad se agrega a los Términos y Condiciones de uso del sitio web del BID.")
+           # )
+           #)
+           
+           
+           
+    )
+  )
